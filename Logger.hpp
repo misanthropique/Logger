@@ -6,12 +6,23 @@
 #pragma once
 
 #include <algorithm>
+#include <cstdarg>
 #include <cstdio>
+#include <ctime>
+#include <iomanip>
 #include <iterator>
 #include <map>
 #include <string>
 #include <vector>
 
+/**
+ * A class for logging messages either out to stderr, or
+ * out to a user defined log file.
+ *
+ * TODO
+ * [ ] Add time since process start
+ * [ ] Add Windows support
+ */
 class Logger
 {
 	std::string mLoggerName;
@@ -53,6 +64,39 @@ class Logger
 	void _getTimestamp(
 		std::string& timestamp )
 	{
+		std::time_t currentTime = std::time( nullptr );
+		std::tm localTime = *std::localtime( &currentTime );
+		std::stringstream timeBuffer;
+
+		switch ( mTimePrefix )
+		{
+		case Logger::TimePrefix::NONE:
+			// Do nothing
+			break;
+
+		case Logger::TimePrefix::ISO_8601:
+			std::tm utcTime = *std::gmtime( &currentTime );
+			timeBuffer << std::put_time( utcTime, "%Y-%m-%dT%H:%M:%SZ" );
+			break;
+
+		case Logger::TimePrefix::LOCAL_DEFAULT:
+			timeBuffer << std::put_time( localTime, "%Y-%m-%d %H:%M:%S" );
+			break;
+
+		case Logger::TimePrefix::SECONDS_SINCE_PROCESS_START:
+			// This is going to be a bit involved.
+			// I'll come back to this later.
+			break;
+
+		case Logger::TimePrefix::USER_DEFINED:
+			if ( not mUserDefinedTimeFormatting.empty() )
+			{
+				timeBuffer << std::put_time( localTime, mUserDefinedTimeFormatting );
+			}
+			break;
+		}
+
+		timestamp = timeBuffer.str();
 	}
 
 	// Write out the log message per the configured
@@ -136,6 +180,17 @@ public:
 		mLoggingLevel = loggingLevel;
 		mTimePrefix = timePrefix;
 		mUserDefinedTimeFormatting = userDefinedTimeFormatting;
+
+		if ( not mLoggerName.empty() )
+		{
+			FILE* filePointer;
+			// If we fail to open the file, then
+			// leave the logging file as stderr.
+			if ( nullptr != ( filePointer = fopen( mLoggerName.c_str(), "w" ) ) )
+			{
+				mLoggingFile = filePointer;
+			}
+		}
 	}
 
 	/**
@@ -147,6 +202,7 @@ public:
 			&& ( nullptr != mLoggingFile ) )
 		{
 			fclose( mLoggingFile );
+			mLoggingFile = nullptr;
 		}
 
 		mLoggingLevel = Logger::Level::NONE;
@@ -175,7 +231,10 @@ public:
 	void info(
 		const char* format, ... )
 	{
-		_writeMessage( Logger::Level::INFO, );
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::INFO, format, arguments );
+		va_end( arguments );
 	}
 
 	/**
@@ -185,6 +244,10 @@ public:
 	void warning(
 		const char* format, ... )
 	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::WARNING, format, arguments );
+		va_end( arguments );
 	}
 
 	/**
@@ -194,6 +257,10 @@ public:
 	void error(
 		const char* format, ... )
 	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::ERROR, format, arguments );
+		va_end( arguments );
 	}
 
 	/**
@@ -203,5 +270,9 @@ public:
 	void critical(
 		const char* format, ... )
 	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::CRITICAL, format, arguments );
+		va_end( arguments );
 	}
 };
