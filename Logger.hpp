@@ -176,11 +176,11 @@ private:
 	{
 		static const std::map< Logger::Level, std::string > MESSAGE_LEVEL_TO_STRING
 		{
-			{ Logger::Level::DEBUG, "DEBUG" },
-			{ Logger::Level::INFO, "INFO" },
-			{ Logger::Level::WARNING, "WARNING" },
-			{ Logger::Level::ERROR, "ERROR" },
-			{ Logger::Level::CRITICAL, "CRITICAL" }
+			{ Logger::Level::DEBUG,    "DEBUG    " },
+			{ Logger::Level::INFO,     "INFO     " },
+			{ Logger::Level::WARNING,  "WARNING  " },
+			{ Logger::Level::ERROR,    "ERROR    " },
+			{ Logger::Level::CRITICAL, "CRITICAL " }
 		};
 
 		if ( _canWriteLogMessage( logMessageLevel ) )
@@ -198,7 +198,7 @@ private:
 			vsnprintf( messageBuffer.data(), messageBuffer.size(), format, arguments );
 
 			// timestamp logger_name level message
-			fprintf( mLoggingFile, "%s%s%s%s%s %s\n",
+			fprintf( mLoggingFile, "%s%s%s%s%s%s\n",
 				timestamp.c_str(), ( 0 == timestamp.length() ) ? "" : " ",
 				mLoggerName.c_str(), ( 0 == mLoggerName.length() ) ? "" : " ",
 				levelString.c_str(), messageBuffer.data() );
