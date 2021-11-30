@@ -6,6 +6,7 @@
 #pragma once
 
 #include <algorithm>
+#include <cctype>
 #include <cstdarg>
 #include <cstdio>
 #include <ctime>
@@ -45,6 +46,50 @@ public:
 		SECONDS_SINCE_PROCESS_START, ///< Seconds since the process started.
 		USER_DEFINED                 ///< Prefix messages with a user defined time stamp.
 	};
+
+	/**
+	 * Determine the logging level from a string.
+	 * The string must be of the same spelling as the enumeration,
+	 * but the case will be ignored. If the spelling is not recognized,
+	 * then the returned Logger::Level shall be the one provided.
+	 * There are a few spelling short-hands available:
+	 *   - "WARN" for Logger::Level::WARNING
+	 *   - "CRIT" for Logger::Level::CRITICAL
+	 *   - "ERR" for Logger::Level::ERROR
+	 * @param level String to be parsed for the logger level.
+	 * @param defaultLevel The default level to return if the level is not recognized.
+	 * @return The logger level parsed from either the string or the default level.
+	 */
+	static Logger::Level getLevelFromString(
+		const std::string& level,
+		Logger::Level defaultLevel = Logger::Level::WARNING )
+	{
+		static const std::map< std::string, Logger::Level > STRING_TO_LEVEL_MAP
+		{
+			{ "ALL",      Logger::Level::ALL },
+			{ "DEBUG",    Logger::Level::DEBUG },
+			{ "INFO",     Logger::Level::INFO },
+			{ "WARNING",  Logger::Level::WARNING },
+			{ "WARN",     Logger::Level::WARNING },
+			{ "ERROR",    Logger::Level::ERROR },
+			{ "ERR",      Logger::Level::ERROR },
+			{ "CRITICAL", Logger::Level::CRITICAL },
+			{ "CRIT",     Logger::Level::CRITICAL },
+			{ "NONE",     Logger::Level::NONE },
+		};
+
+		// Normalize the string to uppercase.
+		std::string normalizedString;
+		std::transform( level.begin(), level.end(), normalizedString.begin(),
+			[]( unsigned char character )
+			{
+				return static_cast< char >( std::toupper( character ) );
+			} );
+
+		auto mapIterator = STRING_TO_LEVEL_MAP.find( normalizedString );
+		return ( STRING_TO_LEVEL_MAP.end() == mapIterator )
+			? defaultLevel : mapIterator->second;
+	}
 
 private:
 	std::string mLoggerName;
