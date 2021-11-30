@@ -25,6 +25,28 @@
  */
 class Logger
 {
+public:
+	enum class Level
+	{
+		ALL,      ///< Everything shall be logged regardless of level.
+		DEBUG,    ///< Everything from debug and above shall be logged.
+		INFO,     ///< Everything from info and above shall be logged.
+		WARNING,  ///< Everything from warning and above shall be logged.
+		ERROR,    ///< Everything from error and above shall be logged.
+		CRITICAL, ///< Critical is the highest level of logging.
+		NONE      ///< Nothing is to be logged.
+	};
+
+	enum class TimePrefix
+	{
+		NONE,                        ///< Don't prefix the messages with any time.
+		ISO_8601,                    ///< Output the time in ISO-8601 UTC time, e.g. 2021-11-18T06:18:23Z.
+		LOCAL_DEFAULT,               ///< Using local time, formatted to YYYY-MM-DD HH:MM::SS.
+		SECONDS_SINCE_PROCESS_START, ///< Seconds since the process started.
+		USER_DEFINED                 ///< Prefix messages with a user defined time stamp.
+	};
+
+private:
 	std::string mLoggerName;
 	Logger::Level mLoggingLevel;
 	FILE* mLoggingFile;
@@ -48,7 +70,7 @@ class Logger
 		static const size_t LOGGER_LEVEL_ORDER_ARRAY_SIZE =
 			sizeof( LOGGER_LEVEL_ORDER ) / sizeof( LOGGER_LEVEL_ORDER[ 0 ] );
 
-		if ( Logger::Level::None == mLoggingLevel )
+		if ( Logger::Level::NONE == mLoggingLevel )
 		{
 			return false;
 		}
@@ -65,7 +87,7 @@ class Logger
 		std::string& timestamp )
 	{
 		std::time_t currentTime = std::time( nullptr );
-		std::tm localTime = *std::localtime( &currentTime );
+		std::tm timeStruct = *std::localtime( &currentTime );
 		std::stringstream timeBuffer;
 
 		switch ( mTimePrefix )
@@ -75,12 +97,12 @@ class Logger
 			break;
 
 		case Logger::TimePrefix::ISO_8601:
-			std::tm utcTime = *std::gmtime( &currentTime );
-			timeBuffer << std::put_time( utcTime, "%Y-%m-%dT%H:%M:%SZ" );
+			timeStruct = *std::gmtime( &currentTime );
+			timeBuffer << std::put_time( &timeStruct, "%Y-%m-%dT%H:%M:%SZ" );
 			break;
 
 		case Logger::TimePrefix::LOCAL_DEFAULT:
-			timeBuffer << std::put_time( localTime, "%Y-%m-%d %H:%M:%S" );
+			timeBuffer << std::put_time( &timeStruct, "%Y-%m-%d %H:%M:%S" );
 			break;
 
 		case Logger::TimePrefix::SECONDS_SINCE_PROCESS_START:
@@ -91,7 +113,7 @@ class Logger
 		case Logger::TimePrefix::USER_DEFINED:
 			if ( not mUserDefinedTimeFormatting.empty() )
 			{
-				timeBuffer << std::put_time( localTime, mUserDefinedTimeFormatting );
+				timeBuffer << std::put_time( &timeStruct, mUserDefinedTimeFormatting.c_str() );
 			}
 			break;
 		}
@@ -121,7 +143,7 @@ class Logger
 			std::string timestamp;
 			_getTimestamp( timestamp );
 
-			const auto& levelString = MESSAGE_LEVEL_TO_STRING[ logMessageLevel ];
+			const auto& levelString = MESSAGE_LEVEL_TO_STRING.at( logMessageLevel );
 
 			va_list argumentsCopy;
 			va_copy( argumentsCopy, arguments );
@@ -131,35 +153,15 @@ class Logger
 			vsnprintf( messageBuffer.data(), messageBuffer.size(), format, arguments );
 
 			// timestamp logger_name level message
-			fprintf( mLoggingFile, "%s%s%s%s%s%s\n",
+			fprintf( mLoggingFile, "%s%s%s%s%s %s\n",
 				timestamp.c_str(), ( 0 == timestamp.length() ) ? "" : " ",
 				mLoggerName.c_str(), ( 0 == mLoggerName.length() ) ? "" : " ",
-				levelString.c_str(), messageBuffer );
+				levelString.c_str(), messageBuffer.data() );
 			fflush( mLoggingFile );
 		}
 	}
 
 public:
-	enum class Level
-	{
-		ALL,      ///< Everything shall be logged regardless of level.
-		DEBUG,    ///< Everything from debug and above shall be logged.
-		INFO,     ///< Everything from info and above shall be logged.
-		WARNING,  ///< Everything from warning and above shall be logged.
-		ERROR,    ///< Everything from error and above shall be logged.
-		CRITICAL, ///< Critical is the highest level of logging.
-		NONE      ///< Nothing is to be logged.
-	};
-
-	enum class TimePrefix
-	{
-		NONE,                        ///< Don't prefix the messages with any time.
-		ISO_8601,                    ///< Output the time in ISO-8601 UTC time, e.g. 2021-11-18T06:18:23Z.
-		LOCAL_DEFAULT,               ///< Using local time, formatted to YYYY-MM-DD HH:MM::SS.
-		SECONDS_SINCE_PROCESS_START, ///< Seconds since the process started.
-		USER_DEFINED                 ///< Prefix messages with a user defined time stamp.
-	};
-
 	/**
 	 * Default constructor for the Logger class.
 	 * @param name Name of this Logger instance. [default: ""]
@@ -206,7 +208,7 @@ public:
 		}
 
 		mLoggingLevel = Logger::Level::NONE;
-		mTimePrefix = Logger::Level::NONE;
+		mTimePrefix = Logger::TimePrefix::NONE;
 		mUserDefinedTimeFormatting.clear();
 		mLoggerName.clear();
 	}
