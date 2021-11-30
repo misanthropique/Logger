@@ -13,6 +13,7 @@
 #include <iomanip>
 #include <iterator>
 #include <map>
+#include <mutex>
 #include <string>
 #include <vector>
 
@@ -20,7 +21,10 @@
  * A class for logging messages either out to stderr, or
  * out to a user defined log file.
  *
- * TODO
+ * Notes:
+ *   - C++17 and above.
+ *
+ * TODO:
  * [ ] Add time since process start
  * [ ] Add Windows support
  */
@@ -97,6 +101,7 @@ private:
 	FILE* mLoggingFile;
 	Logger::TimePrefix mTimePrefix;
 	std::string mUserDefinedTimeFormatting;
+	std::mutex mWriteMutex;
 
 	// Check if the requested log message
 	// is greater than or equal to the set level.
@@ -197,6 +202,7 @@ private:
 
 			vsnprintf( messageBuffer.data(), messageBuffer.size(), format, arguments );
 
+			std::lock_guard writeLock( mWriteMutex );
 			// timestamp logger_name level message
 			fprintf( mLoggingFile, "%s%s%s%s%s%s\n",
 				timestamp.c_str(), ( 0 == timestamp.length() ) ? "" : " ",
