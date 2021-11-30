@@ -57,7 +57,7 @@ public:
 	 *   - "CRIT" for Logger::Level::CRITICAL
 	 *   - "ERR" for Logger::Level::ERROR
 	 * @param level String to be parsed for the logger level.
-	 * @param defaultLevel The default level to return if the level is not recognized.
+	 * @param defaultLevel The default level to return if the level is not recognized. [default: Logger::Level::WARNING]
 	 * @return The logger level parsed from either the string or the default level.
 	 */
 	static Logger::Level getLevelFromString(
