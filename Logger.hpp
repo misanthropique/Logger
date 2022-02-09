@@ -1,5 +1,5 @@
 /**
- * Copyright ©2021. Brent Weichel. All Rights Reserved.
+ * Copyright ©2021-2022. Brent Weichel. All Rights Reserved.
  * Permission to use, copy, modify, and/or distribute this software, in whole
  * or part by any means, without express prior written agreement is prohibited.
  */
@@ -15,6 +15,7 @@
 #include <map>
 #include <mutex>
 #include <string>
+#include <utility>
 #include <vector>
 
 /**
@@ -47,7 +48,6 @@ public:
 		NONE,                        ///< Don't prefix the messages with any time.
 		ISO_8601,                    ///< Output the time in ISO-8601 UTC time, e.g. 2021-11-18T06:18:23Z.
 		LOCAL_DEFAULT,               ///< Using local time, formatted to YYYY-MM-DD HH:MM::SS.
-		SECONDS_SINCE_PROCESS_START, ///< Seconds since the process started.
 		USER_DEFINED                 ///< Prefix messages with a user defined time stamp.
 	};
 
@@ -96,6 +96,8 @@ public:
 	}
 
 private:
+	static const Logger::Level DEFAULT_LOGGING_LEVEL = Logger::Level::WARNING;
+
 	std::string mLoggerName;
 	Logger::Level mLoggingLevel;
 	FILE* mLoggingFile;
@@ -117,6 +119,7 @@ private:
 			Logger::Level::ERROR,
 			Logger::Level::CRITICAL
 		};
+
 		static const size_t LOGGER_LEVEL_ORDER_ARRAY_SIZE =
 			sizeof( LOGGER_LEVEL_ORDER ) / sizeof( LOGGER_LEVEL_ORDER[ 0 ] );
 
@@ -153,11 +156,6 @@ private:
 
 		case Logger::TimePrefix::LOCAL_DEFAULT:
 			timeBuffer << std::put_time( &timeStruct, "%Y-%m-%d %H:%M:%S" );
-			break;
-
-		case Logger::TimePrefix::SECONDS_SINCE_PROCESS_START:
-			// This is going to be a bit involved.
-			// I'll come back to this later.
 			break;
 
 		case Logger::TimePrefix::USER_DEFINED:
@@ -224,7 +222,7 @@ public:
 	Logger(
 		const std::string& name = std::string(),
 		const std::string& filename = std::string(),
-		Logger::Level loggingLevel = Logger::Level::WARNING,
+		Logger::Level loggingLevel = DEFAULT_LOGGING_LEVEL,
 		Logger::TimePrefix timePrefix = Logger::TimePrefix::LOCAL_DEFAULT,
 		const std::string& userDefinedTimeFormatting = std::string() )
 	{
@@ -245,6 +243,18 @@ public:
 			}
 		}
 	}
+
+	/**
+	 * Delete move constructor.
+	 * @param other R-Value of Logger instance to move to this instance.
+	 */
+	Logger( Logger&& other ) = delete;
+
+	/**
+	 * Delete copy constructor.
+	 * @param other Const reference to the Logger instance to copy to this instance.
+	 */
+	Logger( const Logger& other ) = delete;
 
 	/**
 	 * Close any open file handles and release any held resources.
@@ -328,4 +338,18 @@ public:
 		_writeMessage( Logger::Level::CRITICAL, format, arguments );
 		va_end( arguments );
 	}
+
+	/**
+	 * Delete move assignment.
+	 * @param other R-Value of Logger instance to move to this instance.
+	 * @return Reference to this Logger instance.
+	 */
+	Logger& operator=( Logger&& other ) = delete;
+
+	/**
+	 * Copy assignment.
+	 * @param other Const reference to the Logger instance to copy to this instance.
+	 * @return Reference to this Logger instance.
+	 */
+	Logger& operator=( const Logger& other ) = delete;
 };
