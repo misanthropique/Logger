@@ -26,7 +26,6 @@
  *   - C++17 and above.
  *
  * TODO:
- * [ ] Add time since process start
  * [ ] Add Windows support
  */
 class Logger
@@ -232,12 +231,12 @@ public:
 		mTimePrefix = timePrefix;
 		mUserDefinedTimeFormatting = userDefinedTimeFormatting;
 
-		if ( not mLoggerName.empty() )
+		if ( not filename.empty() )
 		{
 			FILE* filePointer;
 			// If we fail to open the file, then
 			// leave the logging file as stderr.
-			if ( nullptr != ( filePointer = fopen( mLoggerName.c_str(), "w" ) ) )
+			if ( nullptr != ( filePointer = fopen( filename.c_str(), "w" ) ) )
 			{
 				mLoggingFile = filePointer;
 			}
