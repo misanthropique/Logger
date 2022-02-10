@@ -336,6 +336,15 @@ public:
 	}
 
 	/**
+	 * Set the level of logging to keep.
+	 * @param level The Logger::Level to set this instance to.
+	 */
+	void setLevel( Logger::Level level )
+	{
+		mLoggingLevel = level;
+	}
+
+	/**
 	 * Delete move assignment.
 	 * @param other R-Value of Logger instance to move to this instance.
 	 * @return Reference to this Logger instance.
