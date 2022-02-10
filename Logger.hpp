@@ -24,9 +24,6 @@
  *
  * Notes:
  *   - C++17 and above.
- *
- * TODO:
- * [ ] Add Windows support
  */
 class Logger
 {
