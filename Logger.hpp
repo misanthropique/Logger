@@ -79,8 +79,8 @@ public:
 		};
 
 		// Normalize the string to uppercase.
-		std::string normalizedString;
-		std::transform( level.begin(), level.end(), normalizedString.begin(),
+		std::string normalizedString( level );
+		std::transform( normalizedString.begin(), normalizedString.end(), normalizedString.begin(),
 			[]( unsigned char character )
 			{
 				return static_cast< char >( std::toupper( character ) );
