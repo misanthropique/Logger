@@ -1,0 +1,49 @@
+@startuml
+
+class "Logger"
+{
++{method} Logger(\n \
+	\tconst std::string& name = std::string(),\n \
+	\tconst std::string& filename = std::string(),\n \
+	\tLogger::Level loggingLevel = DEFAULT_LOGGING_LEVEL,\n \
+	\tLogger::TimePrefix timePrefix = Logger::TimePrefix::LOCAL_DEFAULT,\n \
+	\tconst std::string& userDefinedTimeFormatting = std::string() );
++{method} Logger( Logger&& other ) = delete;
++{method} Logger( const Logger& other ) = delete;
++{method} ~Logger();
++{method} void debug( const char* format, ... );
++{method} void info( const char* format, ... );
++{method} void warning( const char* format, ... );
++{method} void error( const char* format, ... );
++{method} void critical( const char* format, ... );
++{method} void setLevel( Logger::Level level );
++{method} Logger& operator=( Logger&& other ) = delete;
++{method} Logger& operator=( const Logger& other ) = delete;
++{method} static Logger::Level getLevelFromString(\n \
+	\tconst std::string& level,\n \
+	\tLogger::Level defaultLevel = Logger::Level::WARNING );
+}
+
+enum "Logger::Level"
+{
+ALL
+DEBUG
+INFO
+WARNING
+ERROR
+CRITICAL
+NONE
+}
+
+enum "Logger::TimePrefix"
+{
+NONE
+ISO_8601
+LOCAL_DEFAULT
+USER_DEFINED
+}
+
+"Logger" +-- "Logger::Level"
+"Logger" +-- "Logger::TimePrefix"
+
+@enduml
