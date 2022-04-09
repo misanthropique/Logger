@@ -271,6 +271,19 @@ public:
 	}
 
 	/**
+	 * Log a critical message.
+	 * @param format Format string for the critical message.
+	 */
+	void critical(
+		const char* format, ... )
+	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::CRITICAL, format, arguments );
+		va_end( arguments );
+	}
+
+	/**
 	 * Log a debug message.
 	 * @param format Format string for the debug message.
 	 */
@@ -280,32 +293,6 @@ public:
 		va_list arguments;
 		va_start( arguments, format );
 		_writeMessage( Logger::Level::DEBUG, format, arguments );
-		va_end( arguments );
-	}
-
-	/**
-	 * Log a info message.
-	 * @param format Format string for the info message.
-	 */
-	void info(
-		const char* format, ... )
-	{
-		va_list arguments;
-		va_start( arguments, format );
-		_writeMessage( Logger::Level::INFO, format, arguments );
-		va_end( arguments );
-	}
-
-	/**
-	 * Log a warning message.
-	 * @param format Format string for the warning message.
-	 */
-	void warning(
-		const char* format, ... )
-	{
-		va_list arguments;
-		va_start( arguments, format );
-		_writeMessage( Logger::Level::WARNING, format, arguments );
 		va_end( arguments );
 	}
 
@@ -323,25 +310,16 @@ public:
 	}
 
 	/**
-	 * Log a critical message.
-	 * @param format Format string for the critical message.
+	 * Log a info message.
+	 * @param format Format string for the info message.
 	 */
-	void critical(
+	void info(
 		const char* format, ... )
 	{
 		va_list arguments;
 		va_start( arguments, format );
-		_writeMessage( Logger::Level::CRITICAL, format, arguments );
+		_writeMessage( Logger::Level::INFO, format, arguments );
 		va_end( arguments );
-	}
-
-	/**
-	 * Set the level of logging to keep.
-	 * @param level The Logger::Level to set this instance to.
-	 */
-	void setLevel( Logger::Level level )
-	{
-		mLoggingLevel = level;
 	}
 
 	/**
@@ -357,4 +335,26 @@ public:
 	 * @return Reference to this Logger instance.
 	 */
 	Logger& operator=( const Logger& other ) = delete;
+
+	/**
+	 * Set the level of logging to keep.
+	 * @param level The Logger::Level to set this instance to.
+	 */
+	void setLevel( Logger::Level level )
+	{
+		mLoggingLevel = level;
+	}
+
+	/**
+	 * Log a warning message.
+	 * @param format Format string for the warning message.
+	 */
+	void warning(
+		const char* format, ... )
+	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( Logger::Level::WARNING, format, arguments );
+		va_end( arguments );
+	}
 };
