@@ -27,6 +27,35 @@
  */
 class Logger
 {
+private:
+	// Normalize the log level. If the original level is in the expected range,
+	// then just return the level, but if an invalid integral value has been cast to Logger::Level,
+	// then return Logger::Level::NONE; if you're not going to use the defined values, then
+	// I'm not going to play along. I'm an irritable old man that doesn't like to dick around.
+	// This method returns a pair, first is the normalized level, and the second is the index.
+	static std::pair< Logger::Level, size_t > _normalizeLogLevel(
+		Logger::Level originalLevel )
+	{
+		static const Logger::Level LOGGER_LEVEL_ORDER[] =
+		{
+			Logger::Level::ALL,
+			Logger::Level::DEBUG,
+			Logger::Level::INFO,
+			Logger::Level::WARNING,
+			Logger::Level::ERROR,
+			Logger::Level::CRITICAL,
+			Logger::Level::NONE
+		};
+
+		static const size_t LOGGER_LEVEL_ORDER_ARRAY_SIZE =
+			sizeof( LOGGER_LEVEL_ORDER ) / sizeof( LOGGER_LEVEL_ORDER[ 0 ] );
+
+		static const auto LOGGER_LEVEL_ORDER_ARRAY_END = LOGGER_LEVEL_ORDER + LOGGER_LEVEL_ORDER_ARRAY_SIZE - 1;
+
+		auto iterator = std::find( LOGGER_LEVEL_ORDER, LOGGER_LEVEL_ORDER_ARRAY_END, originalLevel );
+		return std::make_pair< Logger::Level, size_t >( *iterator, std::distance( LOGGER_LEVEL_ORDER, iterator ) );
+	}
+
 public:
 	enum class Level
 	{
@@ -86,6 +115,10 @@ public:
 				return static_cast< char >( std::toupper( character ) );
 			} );
 
+		// Normalize the default log level
+		defaultLevel = _normalizeLogLevel( defaultLevel ).first;
+
+		// Get the value from the map, or return the normalized default
 		auto mapIterator = STRING_TO_LEVEL_MAP.find( normalizedString );
 		return ( STRING_TO_LEVEL_MAP.end() == mapIterator )
 			? defaultLevel : mapIterator->second;
@@ -95,7 +128,7 @@ private:
 	static const Logger::Level DEFAULT_LOGGING_LEVEL = Logger::Level::WARNING;
 
 	std::string mLoggerName;
-	Logger::Level mLoggingLevel;
+	std::pair< Logger::Level, size_t > mLoggingLevel;
 	FILE* mLoggingFile;
 	Logger::TimePrefix mTimePrefix;
 	std::string mUserDefinedTimeFormatting;
@@ -106,28 +139,12 @@ private:
 	bool _canWriteLogMessage(
 		Logger::Level logMessageLevel )
 	{
-		static const Logger::Level LOGGER_LEVEL_ORDER[] =
-		{
-			Logger::Level::ALL,
-			Logger::Level::DEBUG,
-			Logger::Level::INFO,
-			Logger::Level::WARNING,
-			Logger::Level::ERROR,
-			Logger::Level::CRITICAL
-		};
-
-		static const size_t LOGGER_LEVEL_ORDER_ARRAY_SIZE =
-			sizeof( LOGGER_LEVEL_ORDER ) / sizeof( LOGGER_LEVEL_ORDER[ 0 ] );
-
-		if ( Logger::Level::NONE == mLoggingLevel )
+		if ( Logger::Level::NONE == mLoggingLevel.first )
 		{
 			return false;
 		}
 
-		auto messageLevel = std::find( LOGGER_LEVEL_ORDER, LOGGER_LEVEL_ORDER + LOGGER_LEVEL_ORDER_ARRAY_SIZE, logMessageLevel );
-		auto loggerLevel = std::find( LOGGER_LEVEL_ORDER, LOGGER_LEVEL_ORDER + LOGGER_LEVEL_ORDER_ARRAY_SIZE, mLoggingLevel );
-
-		return ( std::distance( LOGGER_LEVEL_ORDER, loggerLevel ) <= std::distance( LOGGER_LEVEL_ORDER, messageLevel ) );
+		return ( _normalizeLogLevel( logMessageLevel ).second <= mLoggingLevel.second );
 	}
 
 	// Get the timestamp for the next message.
@@ -224,7 +241,7 @@ public:
 	{
 		mLoggerName = name;
 		mLoggingFile = stderr;
-		mLoggingLevel = loggingLevel;
+		mLoggingLevel = _normalizeLogLevel( loggingLevel );
 		mTimePrefix = timePrefix;
 		mUserDefinedTimeFormatting = userDefinedTimeFormatting;
 
@@ -264,7 +281,7 @@ public:
 			mLoggingFile = nullptr;
 		}
 
-		mLoggingLevel = Logger::Level::NONE;
+		mLoggingLevel = _normalizeLogLevel( Logger::Level::NONE );
 		mTimePrefix = Logger::TimePrefix::NONE;
 		mUserDefinedTimeFormatting.clear();
 		mLoggerName.clear();
@@ -323,6 +340,21 @@ public:
 	}
 
 	/**
+	 * Log a message with the desired log level.
+	 * @param level The level to log the message at.
+	 * @param format Format string for the message.
+	 */
+	void log(
+		Logger::Level level,
+		const char* format, ... )
+	{
+		va_list arguments;
+		va_start( arguments, format );
+		_writeMessage( level, format, arguments );
+		va_end( arguments );
+	}
+
+	/**
 	 * Delete move assignment.
 	 * @param other R-Value of Logger instance to move to this instance.
 	 * @return Reference to this Logger instance.
@@ -342,7 +374,7 @@ public:
 	 */
 	void setLevel( Logger::Level level )
 	{
-		mLoggingLevel = level;
+		mLoggingLevel = _normalizeLogLevel( level );
 	}
 
 	/**
