@@ -2,6 +2,9 @@
 
 class "Logger"
 {
++{method} static Logger::Level getLevelFromString(\n \
+	\tconst std::string& level,\n \
+	\tLogger::Level defaultLevel = Logger::Level::WARNING );
 +{method} Logger(\n \
 	\tconst std::string& name = std::string(),\n \
 	\tconst std::string& filename = std::string(),\n \
@@ -11,17 +14,15 @@ class "Logger"
 +{method} Logger( Logger&& other ) = delete;
 +{method} Logger( const Logger& other ) = delete;
 +{method} ~Logger();
-+{method} void debug( const char* format, ... );
-+{method} void info( const char* format, ... );
-+{method} void warning( const char* format, ... );
-+{method} void error( const char* format, ... );
 +{method} void critical( const char* format, ... );
-+{method} void setLevel( Logger::Level level );
++{method} void debug( const char* format, ... );
++{method} void error( const char* format, ... );
++{method} void info( const char* format, ... );
++{method} void log( Logger::Level level, const char* format, ... );
 +{method} Logger& operator=( Logger&& other ) = delete;
 +{method} Logger& operator=( const Logger& other ) = delete;
-+{method} static Logger::Level getLevelFromString(\n \
-	\tconst std::string& level,\n \
-	\tLogger::Level defaultLevel = Logger::Level::WARNING );
++{method} void setLevel( Logger::Level level );
++{method} void warning( const char* format, ... );
 }
 
 enum "Logger::Level"
